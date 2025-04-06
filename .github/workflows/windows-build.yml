@@ -1,0 +1,35 @@
+name: Build Otclient for Windows
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: 📁 Checkout code
+      uses: actions/checkout@v3
+
+    - name: 📦 Setup vcpkg and dependencies
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+        vcpkgJsonGlob: '**/vcpkg.json'
+
+    - name: 🛠️ Configure and build with CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
+        cmake --build . --config Release
+
+    - name: ⬆️ Upload compiled .exe
+      uses: actions/upload-artifact@v3
+      with:
+        name: otclient-windows
+        path: build/Release/otclient.exe
